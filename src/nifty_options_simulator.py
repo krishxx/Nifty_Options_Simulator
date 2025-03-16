@@ -408,10 +408,10 @@ if __name__ == "__main__":
     
     # Initialize simulator
     simulator = NiftyOptionsSimulator(
-        spot_file='..//data//nifty_spot_12Mar2025.csv',
-        futures_file='..//data//nifty_fut_12Mar2025.csv',
-        sentiment_file='..//data//cum_sent_df2025-03-12.csv',
-        oi_file='..//data//big_oi_summary_rev22025-03-12.csv'
+        spot_file='..//data//nifty_spot.csv',
+        futures_file='..//data//nifty_fut.csv',
+        sentiment_file='..//data//cum_sent_df.csv',
+        oi_file='..//data//big_oi_summary_rev.csv'
     )
     
     # Run simulation
