@@ -14,7 +14,7 @@ class DataChangeHandler(FileSystemEventHandler):
             subprocess.run(["python", "nifty_options_simulator.py"])
 
 if __name__ == "__main__":
-    path = os.path.join("..//data") #monitor the data folder.
+    path = os.path.join("C:\\algotrades\\VM\\Chanakya\\SignalGen\\BNF\\summary") #monitor the data folder.
     event_handler = DataChangeHandler()
     observer = Observer()
     observer.schedule(event_handler, path, recursive=False)

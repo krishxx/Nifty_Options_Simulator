@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
+from datetime import date
 from dataclasses import dataclass
 from typing import List, Dict, Optional
 import plotly.graph_objects as go
@@ -87,7 +88,7 @@ class NiftyOptionsSimulator:
     def check_entry_condition(self, current_row: pd.Series, prev_row: pd.Series, current_time: datetime) -> tuple[Optional[str], Optional[str]]:
         """Check if entry conditions are met"""
         # Check price change condition
-        price_change = current_row['close'] - prev_row['close']
+        price_change = current_row['Close'] - prev_row['Close']
         threshold = 50 * 0.55  # 55% of index strike price interval
         
         # Debug information
@@ -131,7 +132,7 @@ class NiftyOptionsSimulator:
                (self.oi_data['strike_price'] == strike) & \
                (self.oi_data['right'] == ('Call' if option_type == 'CALL' else 'Put'))
         if mask.any():
-            return self.oi_data[mask]['close'].iloc[0]
+            return self.oi_data[mask]['Close'].iloc[0]
         return None
     
     def process_minute(self, current_time: datetime, current_row: pd.Series, prev_row: pd.Series):
@@ -149,7 +150,7 @@ class NiftyOptionsSimulator:
                     target=self.target_level,
                     volume_5min=self.pending_trade['volume_5min'],
                     sentiment=self.pending_trade['sentiment'],
-                    entry_spot=current_row['close'],
+                    entry_spot=current_row['Close'],
                     price_change=self.pending_trade['price_change'],
                     entry_reason=self.pending_trade['entry_reason']
                 )
@@ -163,11 +164,11 @@ class NiftyOptionsSimulator:
                 continue
                 
             # Check target
-            if current_row['close'] <= self.target_level:
+            if current_row['Close'] <= self.target_level:
                 trade.status = 'TARGET_HIT'
                 trade.exit_time = current_time
                 trade.exit_price = current_price
-                trade.exit_spot = current_row['close']
+                trade.exit_spot = current_row['Close']
                 trade.pnl = current_price - trade.entry_price
                 trade.exit_reason = f"Target hit at {self.target_level}"
                 self.active_trades.remove(trade)
@@ -175,12 +176,12 @@ class NiftyOptionsSimulator:
                 continue
                 
             # Check stop loss
-            if (trade.option_type == 'CALL' and current_row['low'] <= trade.stop_loss) or \
-               (trade.option_type == 'PUT' and current_row['high'] >= trade.stop_loss):
+            if (trade.option_type == 'CALL' and current_row['Low'] <= trade.stop_loss) or \
+               (trade.option_type == 'PUT' and current_row['High'] >= trade.stop_loss):
                 trade.status = 'SL_HIT'
                 trade.exit_time = current_time
                 trade.exit_price = current_price
-                trade.exit_spot = current_row['close']
+                trade.exit_spot = current_row['Close']
                 trade.pnl = current_price - trade.entry_price
                 trade.exit_reason = f"Stop loss hit at {trade.stop_loss}"
                 self.active_trades.remove(trade)
@@ -189,11 +190,11 @@ class NiftyOptionsSimulator:
         # Check for new trade entry signal
         entry_signal, entry_reason = self.check_entry_condition(current_row, prev_row, current_time)
         if entry_signal:
-            atm_strike = self.get_atm_strike(current_row['close'], entry_signal)
-            stop_loss = current_row['high'] if entry_signal == 'PUT' else current_row['low']
+            atm_strike = self.get_atm_strike(current_row['Close'], entry_signal)
+            stop_loss = current_row['High'] if entry_signal == 'PUT' else current_row['Low']
             volume_5min = self.get_5min_volume(current_time)
             sentiment = self.get_sentiment(current_time)
-            price_change = current_row['close'] - prev_row['close']
+            price_change = current_row['Close'] - prev_row['Close']
             
             # Store trade details for execution in next minute
             self.pending_trade = {
@@ -222,7 +223,7 @@ class NiftyOptionsSimulator:
             fig.add_trace(
                 go.Scatter(
                     x=self.spot_data['datetime'],
-                    y=self.spot_data['close'],
+                    y=self.spot_data['Close'],
                     name='Spot Price',
                     line=dict(color='blue', width=2),
                     hovertemplate='Time: %{x}<br>Price: %{y:.2f}<extra></extra>'
@@ -405,13 +406,16 @@ class NiftyOptionsSimulator:
 if __name__ == "__main__":
     # Start timing
     start_time = time.time()
+   
+    today = date.today()
+    today_date = str(today.strftime("%Y-%m-%d"))
     
     # Initialize simulator
     simulator = NiftyOptionsSimulator(
-        spot_file='..//data//nifty_spot.csv',
-        futures_file='..//data//nifty_fut.csv',
-        sentiment_file='..//data//cum_sent_df.csv',
-        oi_file='..//data//big_oi_summary_rev.csv'
+        spot_file='C:\\algotrades\VM\\Chanakya\\SignalGen\\BNF\\summary\\spot_df_'+today_date+'.csv',
+        futures_file='C:\\algotrades\VM\\Chanakya\\SignalGen\\BNF\\summary\\nifty_fut_'+today_date+'.csv',
+        sentiment_file='C:\\algotrades\VM\\Chanakya\\SignalGen\\BNF\\summary\\cum_sent_df'+today_date+'.csv',
+        oi_file='C:\\algotrades\VM\\Chanakya\\SignalGen\\BNF\\summary\\big_oi_summary_rev2'+today_date+'.csv'
     )
     
     # Run simulation
